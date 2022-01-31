@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="15dp"/>
+            <stroke android:color="@color/white" android:width="2dp" />
+            <solid android:color="@color/black"/>
+            <size android:width="150dp" android:height="110dp"/>
+        </shape>
+    </item>
+    <item
+        android:drawable="@drawable/ic_eye"
+        android:top="5dp"
+        android:bottom="5dp"
+        android:left="15dp"
+        android:right="15dp"
+        >
+    </item>
+</layer-list>
