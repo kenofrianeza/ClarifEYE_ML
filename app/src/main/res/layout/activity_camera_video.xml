@@ -9,27 +9,39 @@
     android:animateLayoutChanges="true"
     tools:context=".MainActivity">
 
+    <androidx.camera.view.PreviewView
+        android:id="@+id/viewFinder"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/textView4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="TextView" />
+
+    </androidx.camera.view.PreviewView>
+
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/myToolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/black"
+        android:background="@null"
         android:minHeight="?attr/actionBarSize"
-        app:layout_constraintBottom_toTopOf="@+id/viewFinder"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="0dp"
         app:layout_constraintTop_toTopOf="parent"
         app:titleTextColor="@android:color/white" />
 
     <RelativeLayout
         android:id="@+id/focusFrame"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        app:layout_constraintDimensionRatio="3:4"
+        android:layout_height="match_parent"
+        app:layout_constraintDimensionRatio="9:16"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         android:animateLayoutChanges="true"
-        app:layout_constraintTop_toBottomOf="@id/myToolbar"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
         android:elevation="1dp">
 
         <ImageView
@@ -37,20 +49,11 @@
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:contentDescription="Focus"
-            app:tint="@color/white"
-            android:visibility="invisible"/>
+            android:visibility="invisible"
+            app:tint="@color/white" />
 
     </RelativeLayout>
 
-
-    <androidx.camera.view.PreviewView
-        android:id="@+id/viewFinder"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        app:layout_constraintDimensionRatio="3:4"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/myToolbar" />
 
 <!--    <ToggleButton-->
 <!--        android:id="@+id/overlayToggle"-->
@@ -66,20 +69,19 @@
 <!--        app:layout_constraintEnd_toEndOf="parent"-->
 <!--        app:layout_constraintTop_toTopOf="@id/viewFinder" />-->
 
+    Balik later
     <ImageView
         android:id="@+id/overlay"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="match_parent"
         android:layout_gravity="center"
         android:elevation="9dp"
         android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="@+id/viewFinder"
-        app:layout_constraintDimensionRatio="3:4"
+        app:layout_constraintDimensionRatio="9:16"
         app:layout_constraintEnd_toEndOf="@+id/viewFinder"
         app:layout_constraintStart_toStartOf="@id/viewFinder"
         app:layout_constraintTop_toTopOf="@+id/viewFinder" />
-
-
 
     <FrameLayout
         android:id="@+id/cameraTipContainer"
@@ -102,7 +104,7 @@
             android:clipToPadding="false"
             android:gravity="center|top"
             android:rotation="90"
-            android:text="Please align your eyes with the guide."
+            android:text="Please look at the corners when recording."
             android:textAllCaps="false"
             android:textColor="@color/white" />
     </FrameLayout>
@@ -111,13 +113,12 @@
         android:id="@+id/cameraToolbar"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:background="@color/black"
         android:gravity="center"
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/viewFinder">
+        app:layout_constraintTop_toTopOf="@id/horizontal_centerline">
 
         <SeekBar
             android:id="@+id/zoomSlider"
@@ -126,11 +127,11 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
             android:layout_marginEnd="20dp"
-            android:rotation="0"
             android:layout_marginBottom="25dp"
             android:elevation="2dp"
             android:max="100"
-            android:progress="75" />
+            android:progress="0"
+            android:rotation="0" />
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -149,11 +150,11 @@
                 android:scaleType="fitCenter" />
 
             <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/camera_capture_button"
+                android:id="@+id/camera_record_button"
                 android:layout_width="90dp"
                 android:layout_height="90dp"
                 android:layout_centerInParent="true"
-                android:background="@drawable/camera_capture"
+                android:background="@drawable/video_capture"
                 android:elevation="2dp"
                 android:scaleType="fitCenter" />
 
@@ -169,9 +170,25 @@
                 android:rotation="0"
                 android:scaleType="fitCenter" />
 
+            <TextView
+                android:id="@+id/recording_prompt"
+                android:layout_width="128dp"
+                android:layout_height="76dp"
+                android:layout_centerInParent="true"
+                android:visibility="invisible"
+                android:textAlignment="center"
+                android:textColor="@color/white"
+                android:textSize="24sp"
+                android:text="@string/record_prompt" />
         </RelativeLayout>
 
 
     </LinearLayout>
 
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/horizontal_centerline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent=".75" />
 </androidx.constraintlayout.widget.ConstraintLayout>

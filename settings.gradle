@@ -1,2 +1,6 @@
 include ':app'
+//def opencvsdk='C:\\Users\\kenof\\Desktop\\ThesisML\\ClarifEye v1-20211129T060038Z-001\\ClarifEye v1\\Code-20210929T021325Z-001\\Code\\ANDROID\\ClarifEYE_Android-master\\opencv'
 rootProject.name = "ClarifEYE"
+//include ':opencv'
+//project(':opencv').projectDir = new File(opencvsdk + '/sdk')
+include ':opencv'

@@ -41,7 +41,6 @@ class CaptureAdapter(val imageList: ArrayList<DecryptedImage>, val itemClickList
             if (imageList.size == 0){
                 holder.title.visibility = View.INVISIBLE
                 holder.desc.visibility = View.INVISIBLE
-
             }else if(imageList.size == 1){
                 holder.title.visibility = View.VISIBLE
                 holder.desc.visibility = View.VISIBLE
@@ -68,7 +67,7 @@ class CaptureAdapter(val imageList: ArrayList<DecryptedImage>, val itemClickList
     }
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val title: TextView = itemView.findViewById(R.id.capture_title)
-        val img :ImageView = itemView.findViewById(R.id.capture_img)
+        val img : ImageView = itemView.findViewById(R.id.capture_img)
         val desc: TextView = itemView.findViewById(R.id.capture_desc)
 
         fun bind(image: DecryptedImage, clickListener: OnItemClickListener) {

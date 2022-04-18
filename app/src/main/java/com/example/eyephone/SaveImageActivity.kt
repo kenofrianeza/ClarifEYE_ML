@@ -99,9 +99,18 @@ import kotlin.math.round
             }
             val labelString : String? = extras.getString("labels")
             val labelList = labelString?.let { stringToList(it) }
-            if (labelList!=null) {
+            val blurriness = extras.getString("blur")
+            if (labelList!=null && blurriness != null) {
                 println("Received labels in second activity")
-                labelView.text = "Evaluation: " + labelList.get(0) + "\n" + "Confidence: " + String.format("%.3f", labelList.get(1).toDouble()*100) + "%"
+                //labelView.text = "Evaluation: " + labelList.get(0) + "\n" + "Confidence: " + String.format("%.3f", labelList.get(1).toDouble()*100) + "%\n" + "Blur Score (over 200 good): " + blurriness
+                if (blurriness.toDouble() >= 100 && (labelList.get(1).toDouble()*100) >= 99.60) {
+                    labelView.text = "CAPTURED IMAGE IS OF GOOD QUALITY!"
+                }
+                else {
+                    labelView.text = "CAPTURED IMAGE IS BLURRY/UNCLEAR; PLEASE RETAKE"
+                }
+                val pic_score = "Evaluation: " + labelList.get(0) + "\n" + "Confidence: " + String.format("%.3f", labelList.get(1).toDouble()*100) + "%\n" + "Blur Score (over 100 good): " + blurriness
+                println(pic_score)
             }
         }
 
@@ -399,19 +408,29 @@ import kotlin.math.round
     }
     private fun encrypt(data: ByteArray, alias: String): Pair<ByteArray, ByteArray>{
         println("Debug: Launching encrypt in ${Thread.currentThread().name}")
+
         // get the key
 
+        //get the instance of the keystore
         val keyStore = KeyStore.getInstance("AndroidKeyStore")
+        //load null as initialization
         keyStore.load(null)
+        //get the secret key itself (called the secretKeyEntry) by its alias
         val secretKeyEntry = keyStore.getEntry(alias, null) as KeyStore.SecretKeyEntry
+        //extract the secretKey attribute from the secretKeyEntry object
         val secretKey = secretKeyEntry.secretKey
 
         // encrypt the data
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.ENCRYPT_MODE, secretKey)
-        val ivBytes = cipher.iv
-        val encryptedBytes = cipher.doFinal(data)
 
+        //call an instance of Cipher with configurations AES, GCM, and no padding
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        //initialize the cipher in encrypt mode, using the secret key
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey)
+        //get the initialization vector of the resulting cipher
+        val ivBytes = cipher.iv
+        //do the actual encrypting part on the data with type ByteArray using the doFinal method
+        val encryptedBytes = cipher.doFinal(data)
+        //return ivBytes and encryptedBytes as a tuple
         return Pair(ivBytes, encryptedBytes)
     }
     override fun onSupportNavigateUp(): Boolean {

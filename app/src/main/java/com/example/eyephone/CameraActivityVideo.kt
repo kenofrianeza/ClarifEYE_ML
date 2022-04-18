@@ -2,23 +2,22 @@ package com.example.eyephone
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.database.Cursor
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.hardware.SensorManager
 import android.net.Uri
-import android.os.Build
-import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
+import android.os.*
+import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.util.DisplayMetrics
 import android.util.Log
-import android.util.Size
 import android.view.*
 import android.widget.RelativeLayout
 import android.widget.SeekBar
@@ -32,36 +31,35 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.google.mlkit.common.model.LocalModel
-import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.label.ImageLabel
-import com.google.mlkit.vision.label.ImageLabeler
-import com.google.mlkit.vision.label.ImageLabeling
-import com.google.mlkit.vision.label.custom.CustomImageLabelerOptions
-import kotlinx.android.synthetic.main.activity_camera.*
+import androidx.core.view.isVisible
+import io.fotoapparat.parameter.Flash
+import kotlinx.android.synthetic.main.activity_camera.cameraTip
+import kotlinx.android.synthetic.main.activity_camera.cameraTipContainer
+import kotlinx.android.synthetic.main.activity_camera.camera_flash_button
+import kotlinx.android.synthetic.main.activity_camera.camera_flip_button
+import kotlinx.android.synthetic.main.activity_camera.focusFrame
+import kotlinx.android.synthetic.main.activity_camera.focusImg
 import kotlinx.android.synthetic.main.activity_camera.myToolbar
-import kotlinx.android.synthetic.main.activity_main.*
-import org.opencv.android.Utils
-import org.opencv.core.Core
-import org.opencv.core.Mat
-import org.opencv.core.MatOfDouble
-import org.opencv.imgproc.Imgproc
+import kotlinx.android.synthetic.main.activity_camera.overlay
+import kotlinx.android.synthetic.main.activity_camera.viewFinder
+import kotlinx.android.synthetic.main.activity_camera.zoomSlider
+import kotlinx.android.synthetic.main.activity_camera_video.*
 import java.io.File
+import java.net.URISyntaxException
 import java.nio.ByteBuffer
-import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 
-class CameraActivity : AppCompatActivity() {
+class CameraActivityVideo : AppCompatActivity() {
     private var imageCapture: ImageCapture? = null
-    private val INITIAL_ZOOM = 0.75f
+    private val INITIAL_ZOOM = 0f
     private lateinit var camera: Camera
     private lateinit var outputDirectory: File
     private lateinit var cameraExecutor: ExecutorService
-    private var lensFace = CameraSelector.DEFAULT_BACK_CAMERA
+    private var lensFace = CameraSelector.DEFAULT_FRONT_CAMERA
     private var hasFlash: Boolean = true
     private var activityCreated : Boolean = false
     private var showOverlay: Boolean = true
@@ -79,7 +77,7 @@ class CameraActivity : AppCompatActivity() {
         R.id.action_overlay -> {
             if (!showOverlay) {
                 overlay.visibility = View.VISIBLE
-                cameraTip.text = getString(R.string.alignInstruction)
+                cameraTip.text = getString(R.string.lookInstruction)
                 showOverlay = true
             } else {
                 overlay.visibility = View.INVISIBLE
@@ -97,13 +95,13 @@ class CameraActivity : AppCompatActivity() {
     @SuppressLint("RestrictedApi")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_camera)
+        setContentView(R.layout.activity_camera_video)
 //        supportActionBar?.hide()
 //        supportActionBar?.setDisplayHomeAsUpEnabled(true)
         setSupportActionBar(myToolbar)
 
         window.navigationBarColor = resources.getColor(R.color.black)
-        overlay.setImageResource(R.drawable.overlay_single)
+        overlay.setImageResource(R.drawable.overlay_both)
         focusImg.setImageResource(R.drawable.focus)
 
 
@@ -198,10 +196,10 @@ class CameraActivity : AppCompatActivity() {
 
         // Request camera permissions
         if (allPermissionsGranted()) {
-            startCamera()
+            startVideoCamera()
         } else {
             ActivityCompat.requestPermissions(
-                    this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
+                this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
             )
         }
 
@@ -209,7 +207,7 @@ class CameraActivity : AppCompatActivity() {
         setUpZoomSlider()
 
         // Set up the listener for camera buttons
-        camera_capture_button.setOnClickListener { takePhoto() }
+        camera_record_button.setOnClickListener { captureVideo() }
 
         camera_flash_button.setOnClickListener { toggleFlash() }
 
@@ -276,12 +274,13 @@ class CameraActivity : AppCompatActivity() {
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         activityCreated = true
+
     }
 
     override fun onResume() {
         super.onResume()
         if (activityCreated) {
-            startCamera()
+            startVideoCamera()
         }
 
     }
@@ -291,18 +290,13 @@ class CameraActivity : AppCompatActivity() {
     }
 
     private fun showTutorial(){
-        val tutorialDialog = CameraTutorialFragment()
+        val tutorialDialog = VideoCameraTutorialFragment()
         tutorialDialog.show(supportFragmentManager, "tutorialDialog")
     }
 
-    private fun showSavePreview(uri: Uri, labels: List<ImageLabel>, blur_score: Double){
-        println("URI: $uri")
-        println("These are the labels: $labels")
-        println("This is the blur score: $blur_score")
-        val intent = Intent(this, SaveImageActivity::class.java)
-        intent.putExtra("picture", uri.toString())
-        intent.putExtra("labels", labels.toString())
-        intent.putExtra("blur", blur_score.toString())
+    private fun showSavePreview(uri: Uri){
+        val intent = Intent(this, SaveVideoActivity::class.java)
+        intent.putExtra("video", uri.toString())
         startActivity(intent)
     }
     private fun imageProxyToBitmap(image: ImageProxy): Bitmap{
@@ -336,220 +330,45 @@ class CameraActivity : AppCompatActivity() {
             }
         }
         try{
-            startCamera()
+            startVideoCamera()
         }catch (exc: Exception){
             Log.e("Error", "Failed to restart camera bro.")
         }
     }
     private fun toggleFlash() {
-        val imageCapture = imageCapture ?: return
+        //val videoCapture = videoCapture ?: return
         if (!hasFlash) {
             Log.w("Log", "Flash NOT Toggled")
             return
         }
         Log.w("Log", "Flash Toggled")
-        when (imageCapture.flashMode) {
-            ImageCapture.FLASH_MODE_OFF -> {
-                imageCapture.flashMode = ImageCapture.FLASH_MODE_ON
+        when (camera.cameraInfo.torchState.value) {
+            TorchState.OFF -> {
                 camera_flash_button.setBackgroundResource(R.drawable.camera_flash_on)
-            }
-            ImageCapture.FLASH_MODE_ON -> {
-                // "AUTO" means Torch ON
-                imageCapture.flashMode = ImageCapture.FLASH_MODE_AUTO
-                camera_flash_button.setBackgroundResource(R.drawable.camera_torch)
                 camera.cameraControl.enableTorch(true)
             }
-            ImageCapture.FLASH_MODE_AUTO -> {
-                imageCapture.flashMode = ImageCapture.FLASH_MODE_OFF
+            TorchState.ON -> {
+                // "AUTO" means Torch ON
                 camera_flash_button.setBackgroundResource(R.drawable.camera_flash_off)
                 camera.cameraControl.enableTorch(false)
-
             }
-
         }
     }
     private fun rotateBitmap(bitmap: Bitmap, degrees: Int) :Bitmap {
         val matrix = Matrix()
         matrix.preRotate(degrees.toFloat())
         return Bitmap.createBitmap(
-                bitmap,
-                0,
-                0,
-                bitmap.width,
-                bitmap.height,
-                matrix,
-                true
+            bitmap,
+            0,
+            0,
+            bitmap.width,
+            bitmap.height,
+            matrix,
+            true
         )
 
     }
-
-//    private fun createImageProcessor(): ImageLabeler {
-//        //declaring objects for image labeling
-//        //builds the model file
-//        val localModel = LocalModel.Builder()
-//            .setAssetFilePath("assets/eyemodel020822.tflite")
-//            .build()
-//        //builds ImageLabelerOptions object for configuration for labeling the image, showing only labels with minimum 50% confidence level and 5 max displayed labels
-//        val customImageLabelerOptions = CustomImageLabelerOptions.Builder(localModel)
-//            .setConfidenceThreshold(0.5f)
-//            .setMaxResultCount(5)
-//            .build()
-//        //build ImageLabeler object with previous configurations
-//        val labeler = ImageLabeling.getClient(customImageLabelerOptions)
-//        return labeler
-//    }
-
-    private fun takePhoto() {
-        // Get a stable reference of the modifiable image capture use case
-        val imageCapture = imageCapture ?: return
-
-
-        imageCapture.takePicture(
-                ContextCompat.getMainExecutor(this),
-                object : ImageCapture.OnImageCapturedCallback() {
-
-
-                    override fun onCaptureSuccess(imageProxy: ImageProxy) {
-                        //deg holds the value of the image's rotation degree
-                        val deg: Int
-                        //calculates deg if back camera is used
-                        if (lensFace == CameraSelector.DEFAULT_BACK_CAMERA) {
-                            deg = imageProxy.imageInfo.rotationDegrees + currOrientation
-                        //calculates deg if front camera is used
-                        } else {
-                            deg = when (currOrientation){
-                                90 -> imageProxy.imageInfo.rotationDegrees + 270
-                                270 -> imageProxy.imageInfo.rotationDegrees + 90
-                                else -> {
-                                    imageProxy.imageInfo.rotationDegrees + currOrientation
-                                }
-                            }
-
-                        }
-
-                        println("ROTATION: $deg")
-                        //convert image to bitmap
-                        val bitmap = imageProxyToBitmap(imageProxy)
-                        println("IMAGE PROXY TO BITMAP DONE...")
-                        //rotate bitmap
-                        val rotatedBitmap = rotateBitmap(bitmap, deg)
-
-                        //convert bitmap to byte array
-//                    val stream = ByteArrayOutputStream()
-//                    rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, 20, stream)
-//                    Log.w("GGGG", "GOT HERE")
-//                    val byteArr: ByteArray = stream.toByteArray()
-
-                        //save bitmap in temp directory
-                        val outputDir: File =
-                                this@CameraActivity.cacheDir // context being the Activity pointer
-                        File(outputDir, "temp.jpg").writeBitmap(
-                                rotatedBitmap,
-                                Bitmap.CompressFormat.JPEG,
-                                100
-                        )
-                        println("FILE WRITE DONE...")
-
-
-                        //code block for sending image to imagelabeling object
-                        //declaring objects for image labeling
-                        //builds the model file
-                        val localModel = LocalModel.Builder()
-                            .setAssetFilePath("eyemodel2.tflite")
-                            .build()
-                        //builds ImageLabelerOptions object for configuration for labeling the image, showing only labels with minimum 50% confidence level and 5 max displayed labels
-                        val customImageLabelerOptions = CustomImageLabelerOptions.Builder(localModel)
-                            .setConfidenceThreshold(0.5f)
-                            .setMaxResultCount(5)
-                            .build()
-                        //build ImageLabeler object with previous configurations
-                        val labeler = ImageLabeling.getClient(customImageLabelerOptions)
-
-                        //val labeler = createImageProcessor()
-                        @SuppressLint("UnsafeExperimentalUsageError")
-
-                        fun getSharpnessScoreFromOpenCV(bitmap: Bitmap): Double {
-                            //declare matrices to hold input and output arrays (the images)
-                            val destination = Mat()
-                            val matGray = Mat()
-                            val sourceMatImage = Mat()
-                            //convert bitmap to a matrix and store in sourceMatImage
-                            Utils.bitmapToMat(bitmap, sourceMatImage)
-                            //convert Mat to grayscale for blur detection
-                            Imgproc.cvtColor(sourceMatImage, matGray, Imgproc.COLOR_BGR2GRAY)
-                            //apply the Laplacian operator
-                            Imgproc.Laplacian(matGray, destination, 3)
-                            val median = MatOfDouble()
-                            val std = MatOfDouble()
-                            Core.meanStdDev(destination, median, std)
-                            return DecimalFormat("0.00").format(Math.pow(std.get(0, 0)[0], 2.0)).toDouble()
-                        }
-
-                        fun analyze(imageProxy: ImageProxy, inputBitmap: Bitmap) {
-                            val mediaImage = imageProxy.image
-                            if (mediaImage != null) {
-                                val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
-                                val sharp_score = getSharpnessScoreFromOpenCV(inputBitmap)
-                                labeler.process(image)
-                                    .addOnSuccessListener { labels ->
-                                        for (label in labels) {
-                                            val text = label.text
-                                            val confidence = label.confidence
-                                            val index = label.index
-                                            println("text: $text")
-                                            println("confidence: $confidence")
-                                            println("index: $index")
-                                        }
-                                        // send image to new activity with intent
-                                        showSavePreview(Uri.fromFile(File("$outputDir/temp.jpg")), labels, sharp_score)
-                                        println("Image processing was successful! ${Uri.fromFile(File("$outputDir/temp.jpg"))}")
-                                    }
-                                    .addOnFailureListener { e ->
-                                        println("Image processing failed!")
-                                    }
-                            }
-                        }
-                        analyze(imageProxy, bitmap)
-                        //close the image
-                        imageProxy.close()
-                    }
-
-                    override fun onError(exc: ImageCaptureException) {
-                        Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
-                    }
-
-                })
-
-        // use below if you want to save image immediately after taking photo. works as of 09/11/2020
-/*
-        // Create time-stamped output file to hold the image
-        val photoFile = File(
-            outputDirectory,
-            SimpleDateFormat(FILENAME_FORMAT, Locale.US
-            ).format(System.currentTimeMillis()) + ".jpg")
-
-        // Create output options object which contains file + metadata
-        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
-
-        // Set up image capture listener, which is triggered after photo has been taken
-        imageCapture.takePicture(
-                outputOptions, ContextCompat.getMainExecutor(this), object : ImageCapture.OnImageSavedCallback {
-            override fun onError(exc: ImageCaptureException) {
-                Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
-            }
-
-            override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                val savedUri = Uri.fromFile(photoFile)
-                val msg = "Photo capture succeeded: $savedUri"
-                Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
-                Log.d(TAG, msg)
-            }
-        })
-
- */
-    }
-
-    private fun startCamera() {
+    private fun startVideoCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
         cameraProviderFuture.addListener(Runnable {
@@ -558,14 +377,14 @@ class CameraActivity : AppCompatActivity() {
 
             // Preview
             val preview = Preview.Builder()
-                    .setTargetAspectRatio(AspectRatio.RATIO_4_3)
-                    .build()
+                .setTargetAspectRatio(AspectRatio.RATIO_16_9)
+                .build()
 
-            imageCapture = ImageCapture.Builder()
-                    //.setTargetAspectRatio(AspectRatio.RATIO_4_3)
-                    .setTargetResolution(Size(1080, 1440))
-                    .setFlashMode(ImageCapture.FLASH_MODE_ON)
-                    .build()
+            val recorder = Recorder.Builder()
+                .setQualitySelector(QualitySelector.from(Quality.FHD,
+                    FallbackStrategy.higherQualityOrLowerThan(Quality.SD)))
+                .build()
+            videoCapture = VideoCapture.withOutput(recorder)
 
             camera_flash_button.setBackgroundResource(R.drawable.camera_flash_on)
 
@@ -578,10 +397,10 @@ class CameraActivity : AppCompatActivity() {
 
                 // Bind use cases to camera
                 camera = cameraProvider.bindToLifecycle(
-                        this, cameraSelector, preview, imageCapture
+                    this, cameraSelector, preview, videoCapture
                 )
-                //set camera to be initially zoomed in
-                camera.cameraControl.setLinearZoom(INITIAL_ZOOM)
+                //set camera to be NOT initially zoomed in
+                camera.cameraControl.setLinearZoom(0f)
 
                 hasFlash = camera.cameraInfo.hasFlashUnit()
                 preview.setSurfaceProvider(viewFinder.surfaceProvider)
@@ -593,19 +412,181 @@ class CameraActivity : AppCompatActivity() {
         }, ContextCompat.getMainExecutor(this))
     }
 
+    private fun generateVidTitle(): String {
+        val simpleDateFormat = SimpleDateFormat("dd MMM yyyy HH:mm:ss")
+        val date = simpleDateFormat.format(Date())
+        return "Recording - $date"
+    }
+
+    private fun startVideoTimer() {
+        Handler(Looper.getMainLooper()).postDelayed({
+            captureVideo()//Do something after 100ms
+        }, 11000)
+    }
+
+    private fun captureVideo() {
+        val videoCapture = videoCapture ?: return
+//        open_video_mode_button.isEnabled = false
+        val curRecording = recording
+        if (curRecording != null) {
+            // Stop the current recording session.
+            curRecording.stop()
+            recording = null
+            camera_record_button.setBackgroundResource(R.drawable.video_capture)
+            camera_record_button.isEnabled = true
+            camera_record_button.isVisible = true
+            recording_prompt.isVisible = false
+            return
+        }
+        startVideoTimer()
+        camera_record_button.isEnabled = false
+        camera_record_button.setBackgroundResource(R.drawable.camera_stop_recording)
+        camera_record_button.isVisible = false
+        recording_prompt.isVisible = true
+        // create and start a new recording session
+//        val name = SimpleDateFormat(FILENAME_FORMAT, Locale.US)
+//            .format(System.currentTimeMillis())
+        val name = generateVidTitle()
+        val contentValues = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, name)
+            put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
+                put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/ClarifEYE-Video")
+            }
+        }
+
+        val mediaStoreOutputOptions = MediaStoreOutputOptions
+            .Builder(contentResolver, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
+            .setContentValues(contentValues)
+            .build()
+        recording = videoCapture.output
+            .prepareRecording(this, mediaStoreOutputOptions)
+            .start(ContextCompat.getMainExecutor(this)) { recordEvent ->
+                when(recordEvent) {
+                    is VideoRecordEvent.Start -> {
+//                        open_video_mode_button.apply {
+//                            text = getString(R.string.stop_capture)
+//                            isEnabled = true
+//                        }
+                    }
+                    is VideoRecordEvent.Finalize -> {
+                        if (!recordEvent.hasError()) {
+                            val uri = recordEvent.outputResults.outputUri
+                            val msg = "Video capture succeeded: " +
+                                    "${uri}"
+                            Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT)
+                                .show()
+                            Log.d(TAG, msg)
+                            //converting the MediaStore URI to a normal URI
+                            val f = File(getFilePath(this, uri))
+                            val uriFinal = Uri.fromFile(f)
+                            showSavePreview(uriFinal)
+//                            CoroutineScope(Dispatchers.IO).launch{
+//                                save()
+//                            }
+                        } else {
+                            recording?.close()
+                            recording = null
+                            Log.e(TAG, "Video capture ends with error: " +
+                                    "${recordEvent.error}")
+                        }
+//                        open_video_mode_button.apply {
+//                            text = getString(R.string.start_capture)
+//                            isEnabled = true
+//                        }
+                    }
+                }
+            }
+    }
+
+
+    //the following code is for getting the actual file path (the external storage path) of the MediaStore URI
+    @Throws(URISyntaxException::class)
+    open fun getFilePath(context: Context, uri: Uri): String? {
+        var uri = uri
+        var selection: String? = null
+        var selectionArgs: Array<String>? = null
+        // Uri is different in versions after KITKAT (Android 4.4), we need to
+        if (Build.VERSION.SDK_INT >= 19 && DocumentsContract.isDocumentUri(
+                context.applicationContext,
+                uri
+            )
+        ) {
+            if (isExternalStorageDocument(uri)) {
+                val docId = DocumentsContract.getDocumentId(uri)
+                val split = docId.split(":").toTypedArray()
+                return Environment.getExternalStorageDirectory().toString() + "/" + split[1]
+            } else if (isDownloadsDocument(uri)) {
+                val id = DocumentsContract.getDocumentId(uri)
+                uri = ContentUris.withAppendedId(
+                    Uri.parse("content://downloads/public_downloads"), java.lang.Long.valueOf(id)
+                )
+            } else if (isMediaDocument(uri)) {
+                val docId = DocumentsContract.getDocumentId(uri)
+                val split = docId.split(":").toTypedArray()
+                val type = split[0]
+                if ("image" == type) {
+                    uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                } else if ("video" == type) {
+                    uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+                } else if ("audio" == type) {
+                    uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+                }
+                selection = "_id=?"
+                selectionArgs = arrayOf(
+                    split[1]
+                )
+            }
+        }
+        if ("content".equals(uri.scheme, ignoreCase = true)) {
+            if (isGooglePhotosUri(uri)) {
+                return uri.lastPathSegment
+            }
+            val projection = arrayOf(
+                MediaStore.Images.Media.DATA
+            )
+            var cursor: Cursor? = null
+            try {
+                cursor = context.contentResolver
+                    .query(uri, projection, selection, selectionArgs, null)
+                val column_index = cursor!!.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
+                if (cursor.moveToFirst()) {
+                    return cursor.getString(column_index)
+                }
+            } catch (e: java.lang.Exception) {
+                e.printStackTrace()
+            }
+        } else if ("file".equals(uri.scheme, ignoreCase = true)) {
+            return uri.path
+        }
+        return null
+    }
+    fun isExternalStorageDocument(uri: Uri): Boolean {
+        return "com.android.externalstorage.documents" == uri.authority
+    }
+    fun isDownloadsDocument(uri: Uri): Boolean {
+        return "com.android.providers.downloads.documents" == uri.authority
+    }
+    fun isMediaDocument(uri: Uri): Boolean {
+        return "com.android.providers.media.documents" == uri.authority
+    }
+    fun isGooglePhotosUri(uri: Uri): Boolean {
+        return "com.google.android.apps.photos.content" == uri.authority
+    }
+
     override fun onRequestPermissionsResult(
-            requestCode: Int,
-            permissions: Array<String>,
-            grantResults: IntArray
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
     ) {
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
-                startCamera()
+                startVideoCamera()
             } else {
                 Toast.makeText(
-                        this,
-                        "Permissions not granted by the user.",
-                        Toast.LENGTH_SHORT
+                    this,
+                    "Permissions not granted by the user.",
+                    Toast.LENGTH_SHORT
                 ).show()
                 finish()
             }
@@ -613,7 +594,7 @@ class CameraActivity : AppCompatActivity() {
     }
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
         ContextCompat.checkSelfPermission(
-                baseContext, it
+            baseContext, it
         ) == PackageManager.PERMISSION_GRANTED
     }
     private fun getOutputDirectory(): File {
@@ -646,10 +627,10 @@ class CameraActivity : AppCompatActivity() {
     }
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         return if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
-            takePhoto()
+            captureVideo()
             true
         }  else if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
-            takePhoto()
+            captureVideo()
             true
         } else {
             super.onKeyDown(keyCode, event)

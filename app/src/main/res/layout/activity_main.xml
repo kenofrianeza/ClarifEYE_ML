@@ -94,5 +94,31 @@
         android:layout_marginBottom="24dp"
         android:layout_marginEnd="24dp"/>
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabOpenVideo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="100dp"
+        android:contentDescription="Take Video"
+        android:src="@drawable/video_outline"
+        app:fabCustomSize="64dp"
+        app:layout_anchor="@id/viewpager"
+        app:layout_anchorGravity="bottom|right|end" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabOpenRecordedVideos"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="175dp"
+        android:contentDescription="Take Video"
+        android:src="@drawable/ic_baseline_video_library_24"
+        app:fabCustomSize="64dp"
+        app:layout_anchor="@id/viewpager"
+        app:layout_anchorGravity="bottom|right|end" />
+
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

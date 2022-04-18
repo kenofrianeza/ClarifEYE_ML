@@ -22,8 +22,13 @@
         <activity android:name=".PictureTypeActivity" />
         <activity android:name=".ShareActivity" />
         <activity android:name=".SaveImageActivity" />
+        <activity android:name=".SaveVideoActivity" />
         <activity
             android:name=".CameraActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.EyePhone.NoActionBar" />
+        <activity
+            android:name=".CameraActivityVideo"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.EyePhone.NoActionBar" />
         <activity
@@ -34,6 +39,10 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name=".ViewVideosActivity"
+            android:theme="@style/Theme.EyePhone.NoActionBar">
         </activity>
 
         <provider

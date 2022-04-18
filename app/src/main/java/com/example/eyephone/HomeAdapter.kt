@@ -32,7 +32,12 @@ class HomeAdapter(private val context: Context, val itemClickListener: OnItemCli
             })
             holder.recyclerView.layoutManager = layoutManager
             holder.recyclerView.adapter = captureAdapter
-        }else{
+        }else if(position == 1){
+            holder.recyclerView.layoutManager = LinearLayoutManager(context)
+            val captureAdapter = CaptureAdapter(imageList, itemClickListener, context, Constants().HOME_ADAPTER_LIST)
+            holder.recyclerView.adapter = captureAdapter
+        }
+        else{
             holder.recyclerView.layoutManager = LinearLayoutManager(context)
             val captureAdapter = CaptureAdapter(imageList, itemClickListener, context, Constants().HOME_ADAPTER_LIST)
             holder.recyclerView.adapter = captureAdapter

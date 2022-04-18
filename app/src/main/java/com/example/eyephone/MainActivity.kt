@@ -8,6 +8,7 @@ import android.os.SystemClock
 import android.util.Base64
 import android.view.Menu
 import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
@@ -20,6 +21,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.Default
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
+import org.opencv.android.OpenCVLoader
 import java.io.File
 import java.security.KeyStore
 import javax.crypto.Cipher
@@ -118,10 +120,29 @@ class MainActivity : AppCompatActivity(),OnItemClickListener {
             startActivity(intent);
         }
 
+        fabOpenVideo.setOnClickListener {
+            val intent = Intent(this, CameraActivityVideo::class.java)
+            startActivity(intent);
+        }
+
+        fabOpenRecordedVideos.setOnClickListener {
+            val intent = Intent(this, ViewVideosActivity::class.java)
+            startActivity(intent);
+        }
+
         linearProgressIndicator.show()
         textProgressIndicator.visibility = View.VISIBLE
         CoroutineScope(IO).launch {
             initializeHomeScreen()
+        }
+        val ocvLoaded = OpenCVLoader.initDebug();
+        if (ocvLoaded)
+        {
+            Toast.makeText( this@MainActivity, "OpenCV loaded", Toast.LENGTH_SHORT ).show();
+        }
+        else
+        {
+            Toast.makeText( this@MainActivity, "Unable to load OpenCV", Toast.LENGTH_SHORT ).show();
         }
     }
 
@@ -169,6 +190,7 @@ class MainActivity : AppCompatActivity(),OnItemClickListener {
 
     private suspend fun initializeHomeScreen() = withContext(IO){
         println("Debug: Launching InitializeHomeScreen in ${Thread.currentThread().name}")
+        println("The path is: ${this@MainActivity.filesDir.absolutePath}/MyCaptures")
         val path = "${this@MainActivity.filesDir.absolutePath}/MyCaptures"
         val dir = File(path)
         val files = dir.listFiles()
@@ -195,7 +217,7 @@ class MainActivity : AppCompatActivity(),OnItemClickListener {
             viewpager.adapter = HomeAdapter(this@MainActivity, this@MainActivity, imageList)
             val tabIcons = listOf<Int>(
                 R.drawable.ic_sharp_grid_on_24,
-                R.drawable.ic_baseline_list_alt_24
+                R.drawable.ic_baseline_list_alt_24,
             )
 
 
@@ -299,7 +321,6 @@ class MainActivity : AppCompatActivity(),OnItemClickListener {
         keyStore.load(null)
         val secretKeyEntry = keyStore.getEntry(alias, null) as KeyStore.SecretKeyEntry
         val secretKey = secretKeyEntry.secretKey
-
         // decrypt the data
         try {
             val cipher = Cipher.getInstance("AES/GCM/NoPadding")
