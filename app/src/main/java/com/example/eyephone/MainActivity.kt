@@ -319,8 +319,8 @@ class MainActivity : AppCompatActivity(),OnItemClickListener {
 
         val keyStore = KeyStore.getInstance("AndroidKeyStore")
         keyStore.load(null)
-        val secretKeyEntry = keyStore.getEntry(alias, null) as KeyStore.SecretKeyEntry
-        val secretKey = secretKeyEntry.secretKey
+        val secretKeyEntry = keyStore.getEntry(alias, null) as? KeyStore.SecretKeyEntry
+        val secretKey = secretKeyEntry?.secretKey
         // decrypt the data
         try {
             val cipher = Cipher.getInstance("AES/GCM/NoPadding")

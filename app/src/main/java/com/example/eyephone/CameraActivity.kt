@@ -2,7 +2,6 @@ package com.example.eyephone
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -11,11 +10,9 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.hardware.SensorManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.provider.MediaStore
 import android.util.DisplayMetrics
 import android.util.Log
 import android.util.Size
@@ -27,7 +24,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.*
-import androidx.camera.video.VideoCapture
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.app.ActivityCompat
@@ -35,12 +31,10 @@ import androidx.core.content.ContextCompat
 import com.google.mlkit.common.model.LocalModel
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.label.ImageLabel
-import com.google.mlkit.vision.label.ImageLabeler
 import com.google.mlkit.vision.label.ImageLabeling
 import com.google.mlkit.vision.label.custom.CustomImageLabelerOptions
 import kotlinx.android.synthetic.main.activity_camera.*
 import kotlinx.android.synthetic.main.activity_camera.myToolbar
-import kotlinx.android.synthetic.main.activity_main.*
 import org.opencv.android.Utils
 import org.opencv.core.Core
 import org.opencv.core.Mat
@@ -49,8 +43,6 @@ import org.opencv.imgproc.Imgproc
 import java.io.File
 import java.nio.ByteBuffer
 import java.text.DecimalFormat
-import java.text.SimpleDateFormat
-import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -66,8 +58,6 @@ class CameraActivity : AppCompatActivity() {
     private var activityCreated : Boolean = false
     private var showOverlay: Boolean = true
     private var currOrientation = 0
-    private var videoCapture: VideoCapture<Recorder>? = null
-    private var recording: Recording? = null
     private lateinit var myOrientationEventListener: OrientationEventListener
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {

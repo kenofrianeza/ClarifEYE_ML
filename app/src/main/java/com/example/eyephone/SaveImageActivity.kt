@@ -356,6 +356,7 @@ import kotlin.math.round
     private fun writeJson(filename: String, data: String): Boolean {
         println("Debug: Launching writeJson in ${Thread.currentThread().name}")
         val path = this.filesDir.absolutePath
+        println("From writeJson" + this.filesDir.absolutePath)
         val dir = File("$path/MyCaptures")
         if (!dir.exists()){
             dir.mkdir()
