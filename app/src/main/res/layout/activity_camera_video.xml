@@ -104,7 +104,7 @@
             android:clipToPadding="false"
             android:gravity="center|top"
             android:rotation="90"
-            android:text="Please look at the corners when recording."
+            android:text="Please place your eyes within the outline."
             android:textAllCaps="false"
             android:textColor="@color/white" />
     </FrameLayout>
@@ -178,7 +178,7 @@
                 android:visibility="invisible"
                 android:textAlignment="center"
                 android:textColor="@color/white"
-                android:textSize="24sp"
+                android:textSize="22sp"
                 android:text="@string/record_prompt" />
         </RelativeLayout>
 

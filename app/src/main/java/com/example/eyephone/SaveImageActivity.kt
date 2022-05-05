@@ -258,7 +258,7 @@ import kotlin.math.round
              return BitmapFactory.decodeResource(this.resources, R.drawable.overlay_left_eye)}
          else if (imgType == Constants().RIGHT_EYE) {
              return BitmapFactory.decodeResource(applicationContext.resources, R.drawable.overlay_right_eye)}
-         return BitmapFactory.decodeResource(applicationContext.resources, R.drawable.overlay_both_eyes)
+         return BitmapFactory.decodeResource(applicationContext.resources, R.drawable.overlay_both_eyes_flipped)
      }
 
     private fun overlay(bmp1: Bitmap, bmp2: Bitmap): Bitmap? {

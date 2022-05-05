@@ -1,35 +1,26 @@
 package com.example.eyephone
 
-import android.R.attr
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
-import android.provider.MediaStore
 import android.util.Log
-import androidx.appcompat.app.AppCompatActivity
-import kotlinx.android.synthetic.main.activity_main.*
-import org.opencv.video.Video
-import java.io.File
-import java.text.SimpleDateFormat
-import java.util.*
-import android.R.attr.path
-import android.content.Intent
-import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.activity_main.myToolbar
-import android.media.ThumbnailUtils
-
-import android.graphics.Bitmap
-import android.net.Uri
 import android.view.View
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.activity_video_list.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.util.*
+import javax.crypto.*
 
 
 class ViewVideosActivity : AppCompatActivity(), VideoRecyclerViewInterface {
@@ -79,6 +70,39 @@ class ViewVideosActivity : AppCompatActivity(), VideoRecyclerViewInterface {
         videoList.sortByDescending { it.fileDate }
     }
 
+//    private fun encrypt() {
+//        val fis = FileInputStream(File("D:/Shashank/inputVideo.avi"))
+//        val outfile = File("D:/Shashank/encVideo.avi")
+//        var read: Int
+//        if (!outfile.exists()) outfile.createNewFile()
+//        val decfile = File("D:/Shashank/decVideo.avi")
+//        if (!decfile.exists()) decfile.createNewFile()
+//        val fos = FileOutputStream(outfile)
+//        val encfis = FileInputStream(outfile)
+//        val decfos = FileOutputStream(decfile)
+//        val encipher: Cipher = Cipher.getInstance("AES")
+//        val decipher: Cipher = Cipher.getInstance("AES")
+//        val kgen: KeyGenerator = KeyGenerator.getInstance("AES")
+//        //byte key[] = {0x00,0x32,0x22,0x11,0x00,0x00,0x00,0x00,0x00,0x23,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+//        //byte key[] = {0x00,0x32,0x22,0x11,0x00,0x00,0x00,0x00,0x00,0x23,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+//        val skey: SecretKey = kgen.generateKey()
+//        //Lgo
+//        //Lgo
+//        encipher.init(Cipher.ENCRYPT_MODE, skey)
+//        val cis = CipherInputStream(fis, encipher)
+//        decipher.init(Cipher.DECRYPT_MODE, skey)
+//        val cos = CipherOutputStream(decfos, decipher)
+//        while (cis.read().also { read = it } != -1) {
+//            fos.write(read as Char.toInt())
+//            fos.flush()
+//        }
+//        fos.close()
+//        while (encfis.read().also { read = it } != -1) {
+//            cos.write(read)
+//            cos.flush()
+//        }
+//        cos.close()
+//    }
     private suspend fun updateVideoList(action:String, identity: String) = withContext(Dispatchers.IO) {
         if (action == "add") {
             val dir = File(Environment.getExternalStorageDirectory().absolutePath + "/Movies/ClarifEYE-Video")

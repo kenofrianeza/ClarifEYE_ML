@@ -14,11 +14,11 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.updiliman.magnifeye2"
+        applicationId 'com.updiliman.magnifeye2'
         minSdkVersion 23
         targetSdkVersion 31
-        versionCode 11
-        versionName "2.7"
+        versionCode 13
+        versionName "2.81"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

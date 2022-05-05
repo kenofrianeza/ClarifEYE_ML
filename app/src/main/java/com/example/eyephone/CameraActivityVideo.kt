@@ -101,7 +101,7 @@ class CameraActivityVideo : AppCompatActivity() {
         setSupportActionBar(myToolbar)
 
         window.navigationBarColor = resources.getColor(R.color.black)
-        overlay.setImageResource(R.drawable.overlay_both)
+        overlay.setImageResource(R.drawable.overlay_both_blue)
         focusImg.setImageResource(R.drawable.focus)
 
 

@@ -138,7 +138,7 @@ class MainActivity : AppCompatActivity(),OnItemClickListener {
         val ocvLoaded = OpenCVLoader.initDebug();
         if (ocvLoaded)
         {
-            Toast.makeText( this@MainActivity, "OpenCV loaded", Toast.LENGTH_SHORT ).show();
+            println("OpenCV loaded")
         }
         else
         {
